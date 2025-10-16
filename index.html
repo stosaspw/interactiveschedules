@@ -105,11 +105,13 @@
                 return;
             }
 
-            // Create a Date object from the input string.
-            // Using setUTCFullYear/Month/Date ensures the date is treated as midnight UTC,
-            // which prevents local timezone offsets from shifting the date.
-            const refDate = new Date(dateInput);
-            refDate.setUTCHours(0, 0, 0, 0);
+            // Fix: The date input format 'YYYY-MM-DD' is often parsed by browsers as midnight UTC, 
+            // which can shift the date backward by one day when converted to local time.
+            // We reconstruct the date using local components to anchor it to local midnight.
+            const parts = dateInput.split('-').map(p => parseInt(p, 10)); // [year, month, day]
+            // Month is 0-indexed in Date constructor (0=Jan, 11=Dec), so we subtract 1 from the month part.
+            const refDate = new Date(parts[0], parts[1] - 1, parts[2]); 
+            refDate.setHours(0, 0, 0, 0); // Explicitly set to local midnight for consistent calculations.
 
             let tableHTML = `
                 <table class="min-w-full divide-y divide-gray-200">
