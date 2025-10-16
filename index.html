@@ -37,7 +37,7 @@
             <svg class="w-6 h-6 ml-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
         </h1>
         <p class="text-gray-600 mb-6">
-            Enter the **Upload Thesis and Thesis Defense Form** deadline, and the system will calculate your other key due dates.
+            Enter the Upload Thesis and Thesis Defense Form deadline, and the system will calculate your other key due dates.
         </p>
 
         <!-- Input Section -->
@@ -105,13 +105,12 @@
                 return;
             }
 
-            // Fix: The date input format 'YYYY-MM-DD' is often parsed by browsers as midnight UTC, 
-            // which can shift the date backward by one day when converted to local time.
-            // We reconstruct the date using local components to anchor it to local midnight.
+            // Fix 1 (Kept): Correctly construct the date object using local components (Year, MonthIndex, Day)
+            // to anchor it to local midnight and avoid the UTC timezone offset shift.
             const parts = dateInput.split('-').map(p => parseInt(p, 10)); // [year, month, day]
             // Month is 0-indexed in Date constructor (0=Jan, 11=Dec), so we subtract 1 from the month part.
             const refDate = new Date(parts[0], parts[1] - 1, parts[2]); 
-            refDate.setHours(0, 0, 0, 0); // Explicitly set to local midnight for consistent calculations.
+            refDate.setHours(0, 0, 0, 0); // Explicitly set to local midnight for consistent base.
 
             let tableHTML = `
                 <table class="min-w-full divide-y divide-gray-200">
@@ -129,13 +128,11 @@
             `;
 
             scheduleOffsets.forEach(item => {
-                // Clone the reference date to avoid modifying it
-                const newDate = new Date(refDate.getTime());
-                
-                // Calculate the new date by adding the offset in days (multiplied by milliseconds per day)
-                const millisecondsPerDay = 24 * 60 * 60 * 1000;
-                newDate.setTime(newDate.getTime() + (item.offsetDays * millisecondsPerDay));
-                
+                // Fix 2: Use setDate() for reliable day arithmetic.
+                // This method correctly handles month/year rollovers and is immune to DST issues.
+                const newDate = new Date(refDate); // 1. Clone the reference date object
+                newDate.setDate(refDate.getDate() + item.offsetDays); // 2. Add the offset days
+
                 const formattedDate = formatDate(newDate);
 
                 // Determine row styling for emphasis
