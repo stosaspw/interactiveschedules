@@ -102,7 +102,7 @@
             const errorDiv = document.getElementById('error-message');
 
             errorDiv.classList.add('hidden');
-            resultsDiv.classList.add('hidden');
+            // resultsDiv.classList.add('hidden'); // Removed this line, let the hidden class handle initial state
 
             if (!dateInput) {
                 errorDiv.textContent = "Please select a reference date to calculate the deadlines.";
@@ -164,10 +164,10 @@
             resultsDiv.classList.remove('hidden');
         }
         
-        // Run calculation on page load with the default date
-        window.onload = function() {
-            calculateSchedule();
-        }
+        // FIX: Use DOMContentLoaded instead of window.onload for more reliable script execution
+        // and ensure the schedule calculates and displays immediately upon page load.
+        document.addEventListener('DOMContentLoaded', calculateSchedule);
+        
     </script>
 
 </body>
