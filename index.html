@@ -15,6 +15,7 @@
                     colors: {
                         'primary': '#4f46e5',
                         'secondary': '#818cf8',
+                        'highlight-green': '#dcfce7', // Custom light green for highlighted rows
                     }
                 }
             }
@@ -27,11 +28,6 @@
         .card {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        a:link {
-            color: green;
-            background-color: transparent;
-            text-decoration: none;
-        }
     </style>
 </head>
 <body class="font-sans flex items-center justify-center min-h-screen p-4">
@@ -41,8 +37,12 @@
             Thesis Deadline Scheduler
             <svg class="w-6 h-6 ml-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
         </h1>
+        
+        <!-- UPDATED TEXT AND HYPERLINK -->
         <p class="text-gray-600 mb-6">
-            Enter the Upload Thesis and Thesis Defense Form deadline you want to hit from the <a href="https://www.mines.edu/graduate-studies/graduation-deadlines/">OGS Graduation Deadlines page</a>, and the system will calculate your other key due dates.
+            Enter the Upload Thesis and Thesis Defense Form deadline you want to hit from the 
+            <a href="https://www.mines.edu/graduate-studies/graduation-deadlines/" target="_blank" class="text-blue-600 hover:text-blue-800 underline font-semibold">OGS Graduation Deadlines</a> 
+            page, and the system will calculate your other key due dates.
         </p>
 
         <!-- Input Section -->
@@ -60,7 +60,7 @@
 
         <!-- Output Section -->
         <div id="results" class="hidden">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 pt-4 border-t">Calculated Schedule</h2>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 pt-4 border-t">Calculated Schedule </h2>
             <div id="scheduleTable" class="overflow-x-auto">
                 <!-- Schedule results will be injected here -->
             </div>
@@ -76,10 +76,10 @@
         // Thesis Defense Deadline: R - 14 days (2 weeks)
         // Complete Canvas Check-out Course: R + 0 days
         const scheduleOffsets = [
-            { name: "Upload Thesis and Thesis Defense Form", offsetDays: 0 },
-            { name: "Fill out Thesis Scheduling Form", offsetDays: -35 isEmphasis: true},
-            { name: "Send Final Thesis to Committee", offsetDays: -28 isEmphasis: true},
-            { name: "Thesis Defense Deadline", offsetDays: -14 isEmphasis: true},
+            { name: "Upload Thesis and Thesis Defense Form", offsetDays: 0, isReference: true },
+            { name: "Fill out Thesis Scheduling Form", offsetDays: -35 },
+            { name: "Send Final Thesis to Committee", offsetDays: -28 },
+            { name: "Thesis Defense Deadline", offsetDays: -14 },
             { name: "Complete Canvas Check-out Course", offsetDays: 0 },
         ];
 
@@ -110,8 +110,7 @@
                 return;
             }
 
-            // Fix 1 (Kept): Correctly construct the date object using local components (Year, MonthIndex, Day)
-            // to anchor it to local midnight and avoid the UTC timezone offset shift.
+            // Correctly construct the date object using local components (Year, MonthIndex, Day)
             const parts = dateInput.split('-').map(p => parseInt(p, 10)); // [year, month, day]
             // Month is 0-indexed in Date constructor (0=Jan, 11=Dec), so we subtract 1 from the month part.
             const refDate = new Date(parts[0], parts[1] - 1, parts[2]); 
@@ -133,16 +132,20 @@
             `;
 
             scheduleOffsets.forEach(item => {
-                // Fix 2: Use setDate() for reliable day arithmetic.
-                // This method correctly handles month/year rollovers and is immune to DST issues.
+                // Use setDate() for reliable day arithmetic, avoiding DST/timezone issues.
                 const newDate = new Date(refDate); // 1. Clone the reference date object
                 newDate.setDate(refDate.getDate() + item.offsetDays); // 2. Add the offset days
 
                 const formattedDate = formatDate(newDate);
 
                 // Determine row styling for emphasis
-                const rowClass = item.isEmphasis ? 'bg-primary/10 font-bold text-gray-900' : 'bg-LightGreen text-gray-800';
+                let rowClass = item.isReference ? 'bg-primary/10 font-bold text-gray-900' : 'bg-white text-gray-800';
                 
+                // NEW: Check if the item is one of the middle three to apply the highlight green
+                if (item.offsetDays === -35 || item.offsetDays === -28 || item.offsetDays === -14) {
+                    rowClass = 'bg-highlight-green text-gray-800'; 
+                }
+
                 tableHTML += `
                     <tr class="${rowClass} hover:bg-gray-50 transition duration-150">
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -169,5 +172,3 @@
 
 </body>
 </html>
-
-
